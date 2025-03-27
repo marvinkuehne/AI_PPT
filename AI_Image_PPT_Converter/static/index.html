@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image to PPT Converter</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #drop-area {
+            border: 2px dashed #ccc;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        #preview { margin: 20px 0; text-align: center; }
+        #preview img { max-width: 100%; max-height: 300px; }
+        button {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled { background: #ccc; }
+        #status { margin-top: 20px; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>Image to PowerPoint Converter</h1>
+    <div id="drop-area">
+        <p>Drag & drop image here or paste (Ctrl+V)</p>
+        <input type="file" id="file-input" accept="image/*" style="display:none">
+    </div>
+    <div id="preview"></div>
+    <button id="convert-btn" disabled>Convert to PowerPoint</button>
+    <div id="status"></div>
+
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const preview = document.getElementById('preview');
+        const convertBtn = document.getElementById('convert-btn');
+        const statusDiv = document.getElementById('status');
+        let imageData = null;
+
+        // Handle paste event
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    displayImage(blob);
+                    break;
+                }
+            }
+        });
+
+        // Handle drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+            dropArea.addEventListener(event, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        dropArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                displayImage(files[0]);
+            }
+        });
+
+        function displayImage(blob) {
+            preview.innerHTML = '';
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                preview.appendChild(img);
+                imageData = e.target.result.split(',')[1];
+                convertBtn.disabled = false;
+                statusDiv.textContent = 'Ready to convert';
+            };
+            
+            reader.readAsDataURL(blob);
+        }
+
+        // Convert to PPT
+        convertBtn.addEventListener('click', async () => {
+            if (!imageData) return;
+            
+            convertBtn.disabled = true;
+            statusDiv.textContent = 'Processing...';
+            
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageData })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'presentation.pptx';
+                    document.body.appendChild(a);
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    statusDiv.textContent = 'Conversion successful!';
+                } else {
+                    const error = await response.text();
+                    statusDiv.textContent = `Error: ${error}`;
+                }
+            } catch (error) {
+                statusDiv.textContent = `Error: ${error.message}`;
+            } finally {
+                convertBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
