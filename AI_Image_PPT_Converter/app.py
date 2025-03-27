@@ -71,6 +71,8 @@ def analyze_image(image_path):
                         "   - Omitted elements\n"
                         "   - Approximate positioning\n"
                         "   - Color approximations\n"
+                        "   - DO NOT use .add_freeform() – it is NOT supported in python-pptx\n"
+                        "   - Only use add_shape(), add_textbox(), add_picture(), add_table(), add_chart()\n"
                     )
                 },
                 {
@@ -133,13 +135,18 @@ def convert():
             
         ppt_code = code_match.group(1).strip()
         
+        if 'add_freeform' in ppt_code:
+            return jsonify({"error": "Generated code uses unsupported method: add_freeform()"}), 400
+
         # Add shape-related imports if missing
         required_imports = [
             'MSO_SHAPE', 'MSO_CONNECTOR', 'MSO_LINE', 'MSO_FILL'
         ]
         if not all(imp in ppt_code for imp in required_imports):
-            ppt_code = "from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR\n" \
-                       "from pptx.enum.dml import MSO_LINE, MSO_FILL\n" + ppt_code
+            ppt_code = (
+                "from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR\n"
+                "from pptx.enum.dml import MSO_LINE, MSO_FILL\n" + ppt_code
+            )
 
         exec_globals = {
             'Presentation': Presentation,
@@ -152,7 +159,7 @@ def convert():
             'MSO_LINE': MSO_LINE,
             'MSO_FILL': MSO_FILL
         }
-        
+
         try:
             exec(ppt_code, exec_globals)
             if 'create_slide' not in exec_globals:
