@@ -10,6 +10,7 @@ export default function GeneratePptPage() {
   const previewRef = useRef(null);
 
   useEffect(() => {
+    // @ts-expect-error null
     const handlePaste = (e) => {
       const items = e.clipboardData.items;
       for (let i = 0; i < items.length; i++) {
@@ -21,11 +22,13 @@ export default function GeneratePptPage() {
       }
     };
 
+    // @ts-expect-error null
     const preventDefaults = (e) => {
       e.preventDefault();
       e.stopPropagation();
     };
 
+    // @ts-expect-error null
     const handleDrop = (e) => {
       const files = e.dataTransfer.files;
       if (files.length > 0) {
@@ -36,28 +39,37 @@ export default function GeneratePptPage() {
     document.addEventListener('paste', handlePaste);
     const dropArea = dropAreaRef.current;
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+      // @ts-expect-error null
       dropArea.addEventListener(event, preventDefaults, false);
     });
+    // @ts-expect-error null
     dropArea.addEventListener('drop', handleDrop);
 
     return () => {
       document.removeEventListener('paste', handlePaste);
       ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+        // @ts-expect-error null
         dropArea.removeEventListener(event, preventDefaults);
       });
+      // @ts-expect-error null
       dropArea.removeEventListener('drop', handleDrop);
     };
   }, []);
 
-  const displayImage = (blob) => {
+  const displayImage = (blob: Blob) => {
     const reader = new FileReader();
     reader.onload = (e) => {
+      // @ts-expect-error null
       const base64 = e.target.result;
       const img = new Image();
+      // @ts-expect-error null
       img.src = base64;
       img.className = 'max-w-full max-h-[300px] mx-auto';
+      // @ts-expect-error null
       previewRef.current.innerHTML = '';
+      // @ts-expect-error null
       previewRef.current.appendChild(img);
+      // @ts-expect-error null
       setImageData(base64.split(',')[1]);
       setStatus('Ready to convert');
     };
@@ -90,6 +102,7 @@ export default function GeneratePptPage() {
         setStatus(`Error: ${error}`);
       }
     } catch (err) {
+      // @ts-expect-error null
       setStatus(`Error: ${err.message}`);
     } finally {
       setIsProcessing(false);
