@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
-  "homepage": "https://marvinkuehne.github.io/AI_PPT/",
+  "homepage": "https://marvinkuehne.github.io/AI_PPT/frontend/dist/",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
