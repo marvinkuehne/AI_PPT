@@ -5,7 +5,7 @@ import AboutPage from "./pages/about_page.tsx";
 export const routes = [
   {
     path: '',
-    element: <Navigate to='new' />
+    element: <Navigate to='/new' />
   },
   {
     path: 'new',
@@ -26,5 +26,9 @@ export const routes = [
   {
     path: 'about',
     element: <AboutPage />
+  },
+  {
+    path: '*',
+    element: <Navigate to='/new' />
   },
 ]
