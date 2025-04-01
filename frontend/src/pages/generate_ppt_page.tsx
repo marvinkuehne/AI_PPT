@@ -1,24 +1,5 @@
-/*function GeneratePptPage() {
-  return (
-      <div>
-        <h1>Image to PowerPoint Converter</h1>
-        <div id="drop-area">
-          <p>Drag & drop image here or paste (Ctrl+V)</p>
-          <input type="file" id="file-input" accept="image/*" className="p-4 hidden" />
-        </div>
-        <div id="preview"></div>
-        <button id="convert-btn" disabled>Convert to PowerPoint</button>
-        <div id="status"></div>
-      </div>
-  );
-}
-
-export default GeneratePptPage;
-*/
-
-
-
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import {BACKEND_URI} from "../global_varaibles.ts";
 
 export default function GeneratePptPage() {
   const [imageData, setImageData] = useState(null);
@@ -88,7 +69,7 @@ export default function GeneratePptPage() {
     setIsProcessing(true);
     setStatus('Processing...');
     try {
-      const response = await fetch('/convert', {
+      const response = await fetch(BACKEND_URI + '/convert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imageData }),

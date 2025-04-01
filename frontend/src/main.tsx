@@ -32,10 +32,10 @@ const router = createBrowserRouter([
             path: 'new',
             element: <GeneratePptPage />
           },
-          // {
-          //   path: 'files',
-          //   element: <div>Hello FILES</div>
-          // }
+          {
+            path: 'files',
+            element: <div>Hello FILES</div>
+          }
         ]
       },
     ]

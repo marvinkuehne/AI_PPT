@@ -11,11 +11,11 @@ const NAVIGATION: Navigation = [
     title: 'New PPT',
     icon: <AutoFixHighIcon />,
   },
-  // {
-  //   segment: 'files',
-  //   title: 'Files',
-  //   icon: <BackupTableIcon />,
-  // },
+  {
+    segment: 'files',
+    title: 'Files',
+    icon: <BackupTableIcon />,
+  },
 ];
 
 const BRANDING = {
