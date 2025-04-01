@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import {RouterProvider, Outlet, createHashRouter} from "react-router";
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import AppMenu from "./components/AppMenu.tsx";
 import {routes} from "./routes.tsx";
+import App from "./App.tsx";
 
 function _Layout() {
   return (
@@ -18,7 +18,7 @@ function _Layout() {
 
 const router = createHashRouter([
   {
-    element: <AppMenu />,
+    element: <App />,
     children: [
       {
         path: '/',

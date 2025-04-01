@@ -1,11 +1,11 @@
-import {Navigate} from "react-router";
+import {Navigate, RouteObject} from "react-router";
 import GeneratePptPage from "./pages/generate_ppt_page.tsx";
 import AboutPage from "./pages/about_page.tsx";
 
-export const routes = [
+export const routes: RouteObject[] = [
   {
     path: '',
-    element: <Navigate to='/new' />
+    element: <Navigate to='/new' />,
   },
   {
     path: 'new',
