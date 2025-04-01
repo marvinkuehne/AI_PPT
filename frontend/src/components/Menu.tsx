@@ -1,60 +1,26 @@
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import { createTheme } from '@mui/material/styles';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import DescriptionIcon from '@mui/icons-material/Description';
-import LayersIcon from '@mui/icons-material/Layers';
-import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
-import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { useDemoRouter } from '@toolpad/core/internal';
+import { type Navigation } from '@toolpad/core/AppProvider';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import BackupTableIcon from '@mui/icons-material/BackupTable';
+import {ReactRouterAppProvider} from "@toolpad/core/react-router";
+import {Outlet} from "react-router";
 
 const NAVIGATION: Navigation = [
   {
-    kind: 'header',
-    title: 'Main items',
+    segment: 'new',
+    title: 'New PPT',
+    icon: <AutoFixHighIcon />,
   },
   {
-    segment: 'dashboard',
-    title: 'Dashboard',
-    icon: <DashboardIcon />,
-  },
-  {
-    segment: 'orders',
-    title: 'Orders',
-    icon: <ShoppingCartIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    kind: 'header',
-    title: 'Analytics',
-  },
-  {
-    segment: 'reports',
-    title: 'Reports',
-    icon: <BarChartIcon />,
-    children: [
-      {
-        segment: 'sales',
-        title: 'Sales',
-        icon: <DescriptionIcon />,
-      },
-      {
-        segment: 'traffic',
-        title: 'Traffic',
-        icon: <DescriptionIcon />,
-      },
-    ],
-  },
-  {
-    segment: 'integrations',
-    title: 'Integrations',
-    icon: <LayersIcon />,
+    segment: 'files',
+    title: 'Files',
+    icon: <BackupTableIcon />,
   },
 ];
+
+const BRANDING = {
+  title: 'My Toolpad Core App',
+};
 
 const demoTheme = createTheme({
   cssVariables: {
@@ -72,50 +38,14 @@ const demoTheme = createTheme({
   },
 });
 
-function DemoPageContent({ pathname }: { pathname: string }) {
+export default function DashboardLayoutBasic() {
   return (
-      <Box
-          sx={{
-            py: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
-          }}
-      >
-        <Typography>Dashboard content for {pathname}</Typography>
-      </Box>
-  );
-}
-
-interface DemoProps {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * Remove this when copying and pasting into your project.
-   */
-  window?: () => Window;
-}
-
-export default function DashboardLayoutBasic(props: DemoProps) {
-  const { window } = props;
-
-  const router = useDemoRouter('/dashboard');
-
-  // Remove this const when copying and pasting into your project.
-  const demoWindow = window !== undefined ? window() : undefined;
-
-  return (
-      // preview-start
-      <AppProvider
+      <ReactRouterAppProvider
           navigation={NAVIGATION}
-          router={router}
+          branding={BRANDING}
           theme={demoTheme}
-          window={demoWindow}
       >
-        <DashboardLayout>
-          <DemoPageContent pathname={router.pathname} />
-        </DashboardLayout>
-      </AppProvider>
-      // preview-end
+        <Outlet />
+      </ReactRouterAppProvider>
   );
 }
