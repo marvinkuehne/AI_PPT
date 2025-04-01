@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import {createBrowserRouter, RouterProvider, Outlet} from "react-router";
+import {RouterProvider, Outlet, createHashRouter} from "react-router";
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import AppMenu from "./components/AppMenu.tsx";
 import {routes} from "./routes.tsx";
@@ -16,7 +16,7 @@ function _Layout() {
   );
 }
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     element: <AppMenu />,
     children: [
