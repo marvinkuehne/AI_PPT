@@ -1,15 +1,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.tsx'
-import {createBrowserRouter, RouterProvider, Outlet, Navigate} from "react-router";
+import {createBrowserRouter, RouterProvider, Outlet} from "react-router";
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import GeneratePptPage from "./pages/generate_ppt_page.tsx";
+import AppMenu from "./components/AppMenu.tsx";
+import {routes} from "./routes.tsx";
 
-function Layout() {
+function _Layout() {
   return (
       <DashboardLayout>
-        <div className="p-6">
+        <div className="p-6 h-full">
           <Outlet />
         </div>
       </DashboardLayout>
@@ -18,25 +18,12 @@ function Layout() {
 
 const router = createBrowserRouter([
   {
-    element: <App />,
+    element: <AppMenu />,
     children: [
       {
         path: '/',
-        element: <Layout />,
-        children: [
-          {
-            path: '',
-            element: <Navigate to='new' />
-          },
-          {
-            path: 'new',
-            element: <GeneratePptPage />
-          },
-          {
-            path: 'files',
-            element: <div>Hello FILES</div>
-          }
-        ]
+        element: <_Layout />,
+        children: routes
       },
     ]
   }
