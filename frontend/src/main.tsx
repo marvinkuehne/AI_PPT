@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import {createBrowserRouter, RouterProvider, Outlet, Navigate} from "react-router";
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
+import GeneratePptPage from "./pages/generate_ppt_page.tsx";
 
 function Layout() {
   return (
@@ -29,12 +30,12 @@ const router = createBrowserRouter([
           },
           {
             path: 'new',
-            element: <div>Hello NEW</div>
+            element: <GeneratePptPage />
           },
-          {
-            path: 'files',
-            element: <div>Hello FILES</div>
-          }
+          // {
+          //   path: 'files',
+          //   element: <div>Hello FILES</div>
+          // }
         ]
       },
     ]
