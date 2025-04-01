@@ -5,11 +5,12 @@ import sys
 import logging
 from pptx import Presentation
 from pptx.util import Inches, Pt  # Provide common utilities
+from config import AI_CONFIG
 import uuid
 
 # API AI model
-openai.api_key = os.getenv('OPENAI_API_KEY')
-MODEL = "gpt-4o"
+openai.api_key = AI_CONFIG["openai"]["api_key"]
+MODEL = AI_CONFIG["openai"]["model"]
 
 
 @app.route('/convert', methods=['POST'])
