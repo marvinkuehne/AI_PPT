@@ -52,7 +52,6 @@ const NAVIGATION: Navigation = [
 const BRANDING: Branding = {
   title: 'MagicPPT',
   logo: <img src={Logo} alt='logo' className='w-6 flex h-full justify-center items-center' />,
-  // logo: null
 };
 
 const demoTheme = createTheme({
