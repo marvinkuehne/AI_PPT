@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import {BACKEND_URI} from "../global_varaibles.ts";
+import {BACKEND_URL} from "../global_varaibles.ts";
 
 export default function GeneratePptPage() {
   const [imageData, setImageData] = useState(null);
@@ -69,7 +69,7 @@ export default function GeneratePptPage() {
     setIsProcessing(true);
     setStatus('Processing...');
     try {
-      const response = await fetch(BACKEND_URI + '/convert', {
+      const response = await fetch(BACKEND_URL + '/convert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imageData }),
