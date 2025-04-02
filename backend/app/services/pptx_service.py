@@ -69,66 +69,64 @@ def analyze_image(image_path):
         )
     return response.choices[0].message.content
 
+
 @app.route('/convert', methods=['POST'])
 def convert():
     try:
+        # Validate request format
         if not request.is_json:
             return jsonify({"error": "Request must be JSON"}), 400
 
         data = request.get_json()
+        # Check required fields
         if not data or 'image' not in data:
             return jsonify({"error": "No image provided"}), 400
-
         if 'username' not in data:
             return jsonify({"error": "Username is required"}), 400
 
+        # Sanitize username for filename safety
         username = data['username']
+        safe_username = re.sub(r'[^a-zA-Z0-9_-]', '_', username)
 
-        if not validate_image_data(data['image']):
-            return jsonify({"error": "Invalid image format"}), 400  # what is a valid image???
-
-        img_bytes = extract_image_bytes(data['image'])  # why decoding image happens as part of the route process
-
+        # Validate and decode image data
+        img_bytes = extract_image_bytes(data['image'])
         try:
-            Image.open(io.BytesIO(img_bytes)).verify()
+            Image.open(io.BytesIO(img_bytes)).verify()  # Basic image validation
         except:
             return jsonify({"error": "Invalid image data"}), 400
 
-        # deal with username & timestamp & file name
-        safe_username = re.sub(r'[^a-zA-Z0-9_-]', '_', username)
+        # Generate unique filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{safe_username}_{timestamp}.pptx"
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        output_dir = os.path.join(current_dir, 'static', 'files_generated')
-        os.makedirs(output_dir, exist_ok=True)
         filepath = os.path.join(output_dir, filename)
 
+        # Temporary image storage for AI processing
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
             tmp.write(img_bytes)
             img_path = tmp.name
 
+        # AI-powered code generation
         analysis = analyze_image(img_path)
         if not analysis:
             return jsonify({"error": "AI analysis failed"}), 400
 
+        # Extract Python code from AI response
         code_match = re.search(r'```python(.*?)```', analysis, re.DOTALL)
         if not code_match:
             return jsonify({"error": "No valid Python code generated"}), 400
-
         ppt_code = code_match.group(1).strip()
 
+        # Security check for forbidden methods
         if 'add_freeform' in ppt_code:
             return jsonify({"error": "Generated code uses unsupported method: add_freeform()"}), 400
 
-        # Add shape-related imports if missing
+        # Ensure required imports are present
         required_imports = ['MSO_SHAPE', 'MSO_CONNECTOR', 'MSO_LINE', 'MSO_FILL']
-
         if not all(imp in ppt_code for imp in required_imports):
-            ppt_code = (
-                    "from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR\n"
-                    "from pptx.enum.dml import MSO_LINE, MSO_FILL\n" + ppt_code
-            )
+            ppt_code = "from pptx.enum.shapes import MSO_SHAPE, MSO_CONNECTOR\n" + \
+                       "from pptx.enum.dml import MSO_LINE, MSO_FILL\n" + ppt_code
 
+        # Create execution environment with necessary dependencies
         exec_globals = {
             'Presentation': Presentation,
             'Inches': Inches,
@@ -141,21 +139,20 @@ def convert():
             'MSO_FILL': MSO_FILL
         }
 
+        # Execute generated code in controlled environment
         try:
             exec(ppt_code, exec_globals)
             if 'create_slide' not in exec_globals:
                 return jsonify({"error": "Missing create_slide function"}), 400
 
+            # Generate and save presentation
             prs = exec_globals['create_slide']()
-
-            if not hasattr(prs, 'save'):
-                return jsonify({"error": "Invalid presentation object"}), 400
-
             ppt_stream = io.BytesIO()
             prs.save(ppt_stream)
-            prs.save(filepath) # Save to a specified directory
+            prs.save(filepath)  # Save to persistent storage
             ppt_stream.seek(0)
 
+            # Return generated PPT file to client
             return send_file(
                 ppt_stream,
                 as_attachment=True,
@@ -169,6 +166,7 @@ def convert():
     except Exception as e:
         return jsonify({"error": f"Server error: {str(e)}"}), 500
     finally:
+        # Cleanup temporary files
         if 'img_path' in locals() and os.path.exists(img_path):
             try:
                 os.unlink(img_path)
