@@ -12,7 +12,7 @@ import Logo from '../assets/logo.svg'
 const NAVIGATION: Navigation = [
   {
     kind: 'header',
-    title: 'Utilities',
+    title: 'Services',
   },
   {
     segment: 'new',
