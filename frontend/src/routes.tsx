@@ -1,6 +1,9 @@
 import {Navigate, RouteObject} from "react-router";
 import GeneratePptPage from "./pages/generate_ppt_page.tsx";
 import AboutPage from "./pages/about_page.tsx";
+import SettingsPage from "./pages/settings_page.tsx";
+import ProfilePage from "./pages/profile_page.tsx";
+import FilesPage from "./pages/files_page.tsx";
 
 export const routes: RouteObject[] = [
   {
@@ -13,15 +16,15 @@ export const routes: RouteObject[] = [
   },
   {
     path: 'files',
-    element: <div>Hello FILES</div>
+    element: <FilesPage />
   },
   {
     path: 'profile',
-    element: <div>Hello PROFILE</div>
+    element: <ProfilePage />
   },
   {
     path: 'settings',
-    element: <div>Hello SETTINGS</div>
+    element: <SettingsPage />
   },
   {
     path: 'about',
