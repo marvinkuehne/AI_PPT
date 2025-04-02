@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect } from 'react';
 import {GLOBAL} from "../global_varaibles.ts";
+import Page from "../components/Page.tsx";
 
-export default function GeneratePptPage() {
+export default function ConverterPage() {
   const [imageData, setImageData] = useState(null);
   const [status, setStatus] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -110,29 +111,31 @@ export default function GeneratePptPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 font-sans">
-      <h1 className="text-2xl font-bold mb-4">Image to PowerPoint Converter</h1>
-      <div
-        ref={dropAreaRef}
-        className="border-2 border-dashed border-gray-400 p-10 text-center my-6"
-      >
-        <p>Drag & drop image here or paste (Ctrl+V)</p>
-        <input
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-        />
-      </div>
-      <div ref={previewRef} className="text-center my-6"></div>
-      <button
-        className="px-6 py-3 bg-green-600 text-white text-lg rounded disabled:bg-gray-400"
-        onClick={handleConvert}
-        disabled={!imageData || isProcessing}
-      >
-        Convert to PowerPoint
-      </button>
-      <div className="mt-4 text-gray-600">{status}</div>
-    </div>
+      <Page title='Converter' >
+        <div className="max-w-2xl mx-auto p-6 font-sans">
+          <h1 className="text-2xl font-bold mb-4">Image to PowerPoint Converter</h1>
+          <div
+            ref={dropAreaRef}
+            className="border-2 border-dashed border-gray-400 p-10 text-center my-6"
+          >
+            <p>Drag & drop image here or paste (Ctrl+V)</p>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+            />
+          </div>
+          <div ref={previewRef} className="text-center my-6"></div>
+          <button
+            className="px-6 py-3 bg-green-600 text-white text-lg rounded disabled:bg-gray-400"
+            onClick={handleConvert}
+            disabled={!imageData || isProcessing}
+          >
+            Convert to PowerPoint
+          </button>
+          <div className="mt-4 text-gray-600">{status}</div>
+        </div>
+      </Page>
   );
 }
