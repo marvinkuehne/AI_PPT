@@ -8,6 +8,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 import InfoOutlineIcon from '@mui/icons-material/InfoOutline';
 import Logo from '../assets/logo.svg'
+import {GLOBAL} from "../global_varaibles.ts";
 
 const NAVIGATION: Navigation = [
   {
@@ -50,8 +51,10 @@ const NAVIGATION: Navigation = [
 ];
 
 const BRANDING: Branding = {
-  title: 'MagicPPT',
-  logo: <img src={Logo} alt='logo' className='w-6 flex h-full justify-center items-center' />,
+  title: GLOBAL.APP_TITLE,
+  logo: <div className="flex h-full justify-center items-center">
+    <img src={Logo} alt='logo' className='w-6 flex h-6 justify-center items-center' />
+  </div>,
 };
 
 const demoTheme = createTheme({

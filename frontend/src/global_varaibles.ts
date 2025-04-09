@@ -1,4 +1,4 @@
 export const GLOBAL = {
-  APP_TITLE: 'MagicPPT',
+  APP_TITLE: 'DoodlePoint',
   BACKEND_URL: 'http://localhost:5000',
 }
