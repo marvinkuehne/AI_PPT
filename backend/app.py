@@ -101,6 +101,7 @@ def analyze_image(image_path):
 
 @app.route('/convert', methods=['POST'])
 def convert():
+    print(openai.api_key)
     try:
         if not request.is_json:
             return jsonify({"error": "Request must be JSON"}), 400
