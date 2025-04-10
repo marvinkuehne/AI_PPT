@@ -12,8 +12,8 @@ from pptx_service import create_ppt_from_gpt_code
 load_dotenv()
 
 # Configuration
-PROVIDER = "deepseek"  # Alternatives: "gemini", "deepseek"
-MODEL = "deepseek-chat"     # Model name
+PROVIDER = "deepseek"  # Alternatives: "openai" "gemini", "deepseek"
+MODEL = "deepseek-chat"     # Model name: "gpt-4o",
 
 # API-Keys
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
