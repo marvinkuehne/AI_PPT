@@ -20,6 +20,7 @@ const NAVIGATION: Navigation = [
     title: 'Converter',
     icon: <AutoFixHighIcon />,
   },
+  /*
   {
     segment: 'files',
     title: 'Files',
@@ -39,6 +40,7 @@ const NAVIGATION: Navigation = [
     title: 'Settings',
     icon: <SettingsIcon />,
   },
+  */
   {
     kind: 'header',
     title: 'Info',
