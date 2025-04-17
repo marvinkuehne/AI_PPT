@@ -14,6 +14,7 @@ export const routes: RouteObject[] = [
     path: 'new',
     element: <ConverterPage />
   },
+  /*
   {
     path: 'files',
     element: <FilesPage />
@@ -26,6 +27,7 @@ export const routes: RouteObject[] = [
     path: 'settings',
     element: <SettingsPage />
   },
+  */
   {
     path: 'about',
     element: <AboutPage />
