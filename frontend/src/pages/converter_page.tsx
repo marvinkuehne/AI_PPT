@@ -93,7 +93,7 @@ export default function ConverterPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'presentation.pptx';
+        a.download = 'VBA_Presenation.txt';
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(url);
