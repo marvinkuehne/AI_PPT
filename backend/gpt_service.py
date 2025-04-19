@@ -3,31 +3,30 @@
 import os
 import base64
 import re
-import openai
+import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-MODEL = "gpt-4o"  # Deinen OpenAI-Modelnamen hier einstellen
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Stelle sicher, dass dein .env diesen Key hat
+MODEL = "gemini-2.0-flash-lite"  # Modellname für schnelles, günstiges Gemini
 
-openai.api_key = OPENAI_KEY
+genai.configure(api_key=GEMINI_API_KEY)
 
 def run_gpt_and_build_vb(image_path):
     """
     Ruft die Analyse-Routine auf und gibt reinen VBA-Code zurück.
     """
-    return analyze_with_openai_vb(image_path)
+    return analyze_with_gemini_vb(image_path)
 
-
-def analyze_with_openai_vb(image_path):
+def analyze_with_gemini_vb(image_path):
     """
-    Fordert von OpenAI validen VBA-Code an, der in PowerPoint
+    Fordert von Gemini validen VBA-Code an, der in PowerPoint
     ohne Compile-Error ausgeführt werden kann.
     """
-    # Bild als Base64 für Prompt
+    # Bild als Base64
     with open(image_path, "rb") as img_file:
-        encoded = base64.b64encode(img_file.read()).decode("utf-8")
+        image_bytes = img_file.read()
 
     prompt = (
         "You are a PowerPoint VBA generator. Your task is to reconstruct the provided slide image "
@@ -45,25 +44,24 @@ def analyze_with_openai_vb(image_path):
         " 7. Use fixed point coordinates; do not use freeform shapes.\n"
         "Output only the VBA code in a ```vb ... ``` block without any extra explanation."
     )
-    response = openai.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": prompt},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Please reconstruct this slide from the image below:"},
-                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encoded}"}}
-                ]
-            }
+
+    model = genai.GenerativeModel(model_name=MODEL)
+
+    response = model.generate_content(
+        contents=[
+            {"role": "user", "parts": [
+                {"text": prompt},
+                {"inline_data": {"mime_type": "image/png", "data": base64.b64encode(image_bytes).decode('utf-8')}}
+            ]}
         ],
-        temperature=0.0,
-        max_tokens= 5000
+        generation_config={
+            "temperature": 0.0,
+            "max_output_tokens": 5000,
+        }
     )
 
-    raw = response.choices[0].message.content
+    raw = response.text
     return extract_vb_code(raw)
-
 
 def extract_vb_code(raw_code):
     """
