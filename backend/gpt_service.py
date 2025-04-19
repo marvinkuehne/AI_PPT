@@ -6,10 +6,11 @@ import re
 import openai
 from dotenv import load_dotenv
 
-# Load environment variables
+# Environment-Variablen laden
 load_dotenv()
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-MODEL = "gpt-4o"  # Deinen OpenAI-Modelnamen hier einstellen
+# Dein Modell-Name – hier als Fallback, lässt sich aber auch per ENV überschreiben
+MODEL = os.getenv("OPENAI_MODEL", "o4-mini-2025-04-16")
 
 openai.api_key = OPENAI_KEY
 
@@ -29,36 +30,39 @@ def analyze_with_openai_vb(image_path):
     with open(image_path, "rb") as img_file:
         encoded = base64.b64encode(img_file.read()).decode("utf-8")
 
-    prompt = (
-        "You are a PowerPoint VBA generator. Your task is to reconstruct the provided slide image "
-        "as valid VBA code. Generate exactly one Sub named CreatePresentation(), closed by End Sub, that:\n"
-        " 1. Starts PowerPoint (CreateObject(\"PowerPoint.Application\")), makes it visible,\n"
-        " 2. Adds a new Presentation and a title slide (ppLayoutTitle), sets the title text,\n"
-        " 3. Inserts all shapes and lines using only:\n"
-        "    - Set shp = slide.Shapes.AddShape(Type, Left, Top, Width, Height)\n"
-        "    - Set shp = slide.Shapes.AddLine(BeginX, BeginY, EndX, EndY)\n"
-        "    - Set shp = slide.Shapes.AddTextbox(Orientation, Left, Top, Width, Height)\n"
-        "   Never call these methods without `Set` or `Call`.\n"
-        " 4. For arrowheads use `shp.Line.EndArrowheadStyle = msoArrowheadTriangle`.\n"
-        " 5. Set text via `shp.TextFrame.TextRange.Text = ...`.\n"
-        " 6. Use only Microsoft methods (PowerPoint.Application, Presentations.Add, Slides.Add, Shapes.AddShape, Shapes.AddLine, Shapes.AddTextbox).\n"
-        " 7. Use fixed point coordinates; do not use freeform shapes.\n"
-        "Output only the VBA code in a ```vb ... ``` block without any extra explanation."
+    system_prompt = (
+        "You are a PowerPoint VBA generator specialized in clean, consulting‑grade slides (think McKinsey). "
+        "Whenever I provide a slide image, you must:\n"
+        "  • Reconstruct **exactly** every drawn element (shapes, lines, curves, text, icons) with fixed coordinates, matching fill‑colors, line‑colors, line‑weights, arrowheads and fonts.\n"
+        "  • Then apply a consistent, professional consulting style:\n"
+        "      – Use **Calibri** font for all text (titles 28pt bold, body text 16pt regular).\n"
+        "      – Apply a two‑tone gray bucket background for each row or section (alternating RGB(245,245,245) and RGB(230,230,230)).\n"
+        "      – Use a single accent color for key shapes and numbers (e.g. RGB(0,70,127)), and neutral dark gray for text (RGB(60,60,60)).\n"
+        "      – All shapes get subtle rounded corners (radius 6) and a light drop shadow (OffsetX=2, OffsetY=2, Transparency=0.4).\n"
+        "      – Lines/arrows: weight 1pt, accent color for arrows, neutral gray for connectors.\n"
+        "  • Group composite elements (braces, multi‑part icons, house) and label each bucket clearly on the right side with a big circle and number in accent color.\n"
+        "  • Ignore built‑in placeholders (\"Click to add subtitle\"); only draw what’s actually in the sketch.\n"
+        "Generate exactly one `Sub CreatePresentation()`…`End Sub`, using only:\n"
+        "  - PowerPoint.Application, Presentations.Add, Slides.Add\n"
+        "  - Shapes.AddShape, Shapes.AddLine, Shapes.AddCurve/BuildFreeform, Shapes.AddTextbox, Range().Group\n"
+        "  - For every shape/text: set `.Fill.ForeColor.RGB`, `.Line.ForeColor.RGB`, `.Line.Weight`, `.TextFrame.TextRange.Font.*` as needed\n"
+        "Output **only** the VBA code in a ```vb\n…``` block—no comments or extra text."
+
     )
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": [
+            {"type": "text", "text": "Please reconstruct this slide from the image below:"},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encoded}"}}
+        ]}
+    ]
+
     response = openai.chat.completions.create(
         model=MODEL,
-        messages=[
-            {"role": "system", "content": prompt},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Please reconstruct this slide from the image below:"},
-                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encoded}"}}
-                ]
-            }
-        ],
-        temperature=0.0,
-        max_tokens= 5000
+        messages=messages,
+
+        max_completion_tokens=5000
     )
 
     raw = response.choices[0].message.content
