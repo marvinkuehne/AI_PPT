@@ -3,10 +3,7 @@ import {Branding, type Navigation} from '@toolpad/core/AppProvider';
 import {ReactRouterAppProvider} from "@toolpad/core/react-router";
 import {Outlet} from "react-router";
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import BackupTableIcon from '@mui/icons-material/BackupTable';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import SettingsIcon from '@mui/icons-material/Settings';
-import InfoOutlineIcon from '@mui/icons-material/InfoOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import Logo from '../assets/logo.svg'
 import {GLOBAL} from "../global_varaibles.ts";
 
@@ -48,7 +45,7 @@ const NAVIGATION: Navigation = [
   {
     segment: 'about',
     title: 'About',
-    icon: <InfoOutlineIcon />,
+    icon: <HelpOutlineIcon />,
   },
 ];
 

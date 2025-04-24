@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import {GLOBAL} from "../global_varaibles.ts";
 import Page from "../components/Page.tsx";
+import ConverterInfoCard from "../components/ConverterInfoCard.tsx";
 
 export default function ConverterPage() {
   const [imageData, setImageData] = useState(null);
@@ -128,13 +129,15 @@ export default function ConverterPage() {
           </div>
           <div ref={previewRef} className="text-center my-6"></div>
           <button
-            className="px-6 py-3 bg-green-600 text-white text-lg rounded disabled:bg-gray-400"
+            className="px-6 py-3 bg-blue-500 text-white text-lg rounded cursor-pointer w-full"
             onClick={handleConvert}
             disabled={!imageData || isProcessing}
           >
             Convert to PowerPoint
           </button>
           <div className="mt-4 text-gray-600">{status}</div>
+
+          <ConverterInfoCard className="mt-4"/>
         </div>
       </Page>
   );
