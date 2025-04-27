@@ -1,175 +1,111 @@
-# gpt_service.py:
-
 import os
 import base64
 import re
-import requests
-import openai  # for openai
-from dotenv import load_dotenv  # Load .env support
-from pptx_service import create_ppt_from_gpt_code
+import openai
+import logging
+from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+
+# Environment-Variablen laden
 load_dotenv()
-
-# Configuration
-PROVIDER = "deepseek"  # Alternatives: "openai" "gemini", "deepseek"
-MODEL = "deepseek-chat"     # Model name: "gpt-4o",
-
-# API-Keys
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-GEMINI_KEY = os.getenv("GEMINI_API_KEY")
-DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY")
+# Dein Modell-Name – hier als Fallback, lässt sich aber auch per ENV überschreiben
+MODEL = os.getenv("OPENAI_MODEL", "o4-mini-2025-04-16")
 
-# Entry point from app.py
-def run_gpt_and_build_pptx(image_path):
-    code = analyze_slide_with_ai(image_path)
-    return create_ppt_from_gpt_code(code)
+openai.api_key = OPENAI_KEY
 
-# Selection logic
-def analyze_slide_with_ai(image_path):
-    if PROVIDER == "openai":
-        return analyze_with_openai(image_path)
-    elif PROVIDER == "gemini":
-        return analyze_with_gemini(image_path)
-    elif PROVIDER == "deepseek":
-        return analyze_with_deepseek(image_path)
-    else:
-        raise ValueError(f"Unsupported provider: {PROVIDER}")
 
-# OpenAI GPT models
-def analyze_with_openai(image_path):
-    openai.api_key = OPENAI_KEY
+def run_gpt_and_build_vb(image_path):
+    """
+    Calls the analysis routine and returns raw VBA code.
+    Retries once with an explicit retry prompt if the initial output is empty.
+    """
+    # First attempt
+    vb_code = analyze_with_openai_vb(image_path)
+    # Retry with clarification if empty
+    if not vb_code.strip():
+        vb_code = analyze_with_openai_vb(
+            image_path,
+            reminder="I didn't receive any VBA code. Please output only the VBA code in a single fenced block, without any extra text."
+        )
+    return vb_code
 
+
+def analyze_with_openai_vb(image_path: str, reminder: str = None) -> str:
+    """
+    Requests valid VBA code from OpenAI that compiles in PowerPoint.
+    Optionally includes a reminder message for retries.
+    """
+    # Read and encode the image for the prompt
     with open(image_path, "rb") as img_file:
         encoded = base64.b64encode(img_file.read()).decode("utf-8")
+
+    system_prompt = (
+        "You are a PowerPoint VBA generator specialized in clean, consulting‑grade slides (think McKinsey). "
+        "Whenever I provide a slide image, you must:\n"
+        "  • Reconstruct **exactly** every drawn element (shapes, lines, curves, text, icons) with fixed coordinates, matching fill‑colors, line‑colors, line‑weights, arrowheads and fonts.\n"
+        "  • Then apply a consistent, professional consulting style:\n"
+        "      – Use **Calibri** font …\n"
+        "      – Apply a two-tone gray bucket background …\n"
+        "      – Use a single accent color …\n"
+        "      – All shapes get a light drop shadow (use msoShadowStyleOuterShadow for `.Shadow.Type`, with OffsetX=2, OffsetY=2, Transparency=0.4).\n"
+        "      – For rounded rectangles, do **not** use `.RoundedCorners`. Instead:\n"
+        "          1. Add with `msoShapeRoundedRectangle`\n"
+        "          2. Set corner radius: `.Adjustments(1)=0.06`\n"
+        "      – Lines/arrows: weight 1pt, accent color …\n"
+        "  • Group composite elements (braces, multi‑part icons, house) and label each bucket clearly on the right side with a big circle and number in accent color.\n"
+        "  • Ignore built‑in placeholders (\"Click to add subtitle\"); only draw what’s actually in the sketch.\n"
+        "Generate exactly one `Sub CreatePresentation()`…`End Sub`, using only:\n"
+        "  - PowerPoint.Application, Presentations.Add, Slides.Add\n"
+        "  - Shapes.AddShape, Shapes.AddLine, Shapes.AddCurve, Shapes.AddTextbox, Range().Group (use a Variant array of point Arrays for AddCurve)"
+        "  - For every shape/text: set `.Fill.ForeColor.RGB`, `.Line.ForeColor.RGB`, `.Line.Weight`, `.TextFrame.TextRange.Font.*` as needed\n"
+        "Output **only** the VBA code in a ```vb\n…``` block—no comments or extra text."
+    )
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": [
+            {"type": "text", "text": "Please reconstruct this slide from the image below:"},
+            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encoded}"}}
+        ]}
+    ]
+
+    # If this is a retry, append a clarifying message
+    if reminder:
+        messages.append({"role": "assistant", "content": reminder})
+    
 
     response = openai.chat.completions.create(
         model=MODEL,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a PowerPoint reconstruction AI. Your task is to extract layout, shapes and texts "
-                    "from the provided slide image and generate **valid Python code** using python-pptx.\n\n"
-                    "IMPORTANT RULES:\n"
-                    "1. Output must contain exactly one Python function named `create_slide()`.\n"
-                    "2. This function must return a `Presentation` object.\n"
-                    "3. Only use: add_shape, add_textbox, add_picture – NO `add_freeform()`.\n"
-                    "4. Use `Inches()` for all positioning.\n"
-                    "5. Do NOT explain anything. Only return pure code inside a ```python block.\n\n"
-                    "Start the response like this:\n"
-                    "```python\n"
-                    "def create_slide():\n"
-                    "    prs = Presentation()\n"
-                    "    slide = prs.slides.add_slide(prs.slide_layouts[6])\n"
-                    "    # ... elements here ...\n"
-                    "    return prs\n"
-                    "```"
-                )
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Please reconstruct this slide from the image:"},
-                    {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{encoded}"}}
-                ]
-            }
-        ],
-        max_tokens=4000,
-        temperature=0.1,
-        top_p=0.95
+        messages=messages,
+        max_completion_tokens=5000
     )
-    return response.choices[0].message.content
 
-# Gemini API via HTTP, prompt in user message
-def analyze_with_gemini(image_path):
-    with open(image_path, "rb") as f:
-        encoded_image = base64.b64encode(f.read()).decode("utf-8")
+    raw = response.choices[0].message.content
+    # Log the raw LLM response for debugging
+    logging.info(f"Raw GPT response: {raw}")
+    return extract_vb_code(raw)
 
-    body = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": (
-                        "Please analyze this slide image and respond with ONLY a python function named `create_slide()` that builds the layout using python-pptx.\n"
-                        "Do not include any explanation or commentary. The function must return a `Presentation` object.\n"
-                        "Avoid using unsupported methods like `add_freeform()`. Use only `add_shape`, `add_textbox`, `add_picture`.\n"
-                        "Use Inches() for all positioning. Start your response in a ```python block."
-                    )},
-                    {
-                        "inlineData": {
-                            "mimeType": "image/png",
-                            "data": encoded_image
-                        }
-                    }
-                ]
-            }
-        ]
-    }
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={GEMINI_KEY}"
-    response = requests.post(url, json=body)
-    result = response.json()
-    return result["candidates"][0]["content"]["parts"][0]["text"]
 
-# DeepSeek prompt via HTTP with strict code-only instruction
-def analyze_with_deepseek(image_path):
-    if not DEEPSEEK_KEY:
-        raise ValueError("DEEPSEEK_API_KEY is missing! Check .env file")
-
-    with open(image_path, "rb") as img_file:
-        encoded = base64.b64encode(img_file.read()).decode("utf-8")
-
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": "deepseek-chat",
-        "messages": [
-            {
-                "role": "system",
-                "content": (
-                    "You are a PowerPoint AI. Generate python-pptx code with:\n"
-                    "1. One function create_slide() returning Presentation\n"
-                    "2. Use add_shape/add_textbox/add_picture only\n"
-                    "3. Use Inches() for positioning\n"
-                    "4. Output ONLY code in ```python block"
-                )
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Reconstruct this slide:"},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{encoded}",
-                            "detail": "auto"  # Required for image processing
-                        }
-                    }
-                ]
-            }
-        ],
-        "temperature": 0.1,
-        "max_tokens": 2000
-    }
-
-    try:
-        response = requests.post(
-            "https://api.deepseek.com/v1/chat/completions",
-            headers=headers,
-            json=payload
-        )
-        response.raise_for_status()
-        result = response.json()
-        gpt_code = result["choices"][0]["message"]["content"]
-
-        # Extract code block
-        code_match = re.search(r'```python\n(.*?)```', gpt_code, re.DOTALL)
-        return code_match.group(1).strip() if code_match else gpt_code
-
-    except Exception as e:
-        print(f"DeepSeek Error: {response.text if response else str(e)}")
-        raise
+def extract_vb_code(raw_code):
+    """
+    Extracts VBA code from fenced code blocks (```vb, ```vba, or untagged),
+    or falls back to capturing a Sub...End Sub macro if fences are missing.
+    """
+    # Try fenced blocks with vb or vba tag
+    match = re.search(r'```(?:vb|vba)(.*?)```', raw_code, re.DOTALL | re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    # Try untagged fenced block
+    match2 = re.search(r'```(.*?)```', raw_code, re.DOTALL)
+    if match2:
+        return match2.group(1).strip()
+    # Fallback: capture Sub CreatePresentation()...End Sub
+    fallback = re.search(r'(Sub CreatePresentation\(.*?End Sub)', raw_code, re.DOTALL)
+    if fallback:
+        return fallback.group(1).strip()
+    # As last resort, return entire raw
+    return raw_code.strip()
