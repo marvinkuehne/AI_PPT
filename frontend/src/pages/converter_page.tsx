@@ -1,76 +1,77 @@
 import { useRef, useState, useEffect } from 'react';
 import { GLOBAL } from "../global_varaibles.ts";
 import Page from "../components/Page.tsx";
-
-const DRAG_EVENTS = ['dragenter', 'dragover', 'dragleave', 'drop'] as const;
+import ConverterInfoCard from "../components/ConverterInfoCard.tsx";
 
 export default function ConverterPage() {
-    const [imageData, setImageData] = useState<string | null>(null);
-    const [status, setStatus] = useState<string>('');
-    const [isProcessing, setIsProcessing] = useState<boolean>(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const dropAreaRef = useRef<HTMLDivElement>(null);
-    const previewRef = useRef<HTMLDivElement>(null);
+    const [imageData, setImageData] = useState(null);
+    const [status, setStatus] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
+    const fileInputRef = useRef(null);
+    const dropAreaRef = useRef(null);
+    const previewRef = useRef(null);
 
     useEffect(() => {
-        const handlePaste = (e: ClipboardEvent) => {
-            const items = e.clipboardData?.items;
-            if (!items) return;
+        // @ts-expect-error null
+        const handlePaste = (e) => {
+            const items = e.clipboardData.items;
             for (let i = 0; i < items.length; i++) {
-                if (items[i].type.startsWith('image/')) {
+                if (items[i].type.indexOf('image') !== -1) {
                     const blob = items[i].getAsFile();
-                    if (blob) displayImage(blob);
+                    displayImage(blob);
                     break;
                 }
             }
         };
 
-        // Accept a generic Event so we can listen for multiple drag events
-        const preventDefaults = (e: Event) => {
+        // @ts-expect-error null
+        const preventDefaults = (e) => {
             e.preventDefault();
             e.stopPropagation();
         };
 
-        const handleDrop = (e: Event) => {
-            preventDefaults(e);
-            const dragEvent = e as DragEvent;
-            const files = dragEvent.dataTransfer?.files;
-            if (files && files.length > 0) {
+        // @ts-expect-error null
+        const handleDrop = (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
                 displayImage(files[0]);
             }
         };
 
-        document.addEventListener('paste', handlePaste as EventListener);
+        document.addEventListener('paste', handlePaste);
         const dropArea = dropAreaRef.current;
-        if (dropArea) {
-            DRAG_EVENTS.forEach((event) => {
-                dropArea.addEventListener(event, preventDefaults);
-            });
-            dropArea.addEventListener('drop', handleDrop as EventListener);
-        }
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+            // @ts-expect-error null
+            dropArea.addEventListener(event, preventDefaults, false);
+        });
+        // @ts-expect-error null
+        dropArea.addEventListener('drop', handleDrop);
 
         return () => {
-            document.removeEventListener('paste', handlePaste as EventListener);
-            if (dropArea) {
-                DRAG_EVENTS.forEach((event) => {
-                    dropArea.removeEventListener(event, preventDefaults);
-                });
-                dropArea.removeEventListener('drop', handleDrop as EventListener);
-            }
+            document.removeEventListener('paste', handlePaste);
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+                // @ts-expect-error null
+                dropArea.removeEventListener(event, preventDefaults);
+            });
+            // @ts-expect-error null
+            dropArea.removeEventListener('drop', handleDrop);
         };
     }, []);
 
     const displayImage = (blob: Blob) => {
         const reader = new FileReader();
         reader.onload = (e) => {
-            const base64 = e.target?.result as string;
+            // @ts-expect-error null
+            const base64 = e.target.result;
             const img = new Image();
+            // @ts-expect-error null
             img.src = base64;
             img.className = 'max-w-full max-h-[300px] mx-auto';
-            if (previewRef.current) {
-                previewRef.current.innerHTML = '';
-                previewRef.current.appendChild(img);
-            }
+            // @ts-expect-error null
+            previewRef.current.innerHTML = '';
+            // @ts-expect-error null
+            previewRef.current.appendChild(img);
+            // @ts-expect-error null
             setImageData(base64.split(',')[1]);
             setStatus('Ready to convert');
         };
@@ -111,7 +112,7 @@ export default function ConverterPage() {
     };
 
     return (
-        <Page title='Converter'>
+        <Page title='Converter' >
             <div className="max-w-2xl mx-auto p-6 font-sans">
                 <h1 className="text-2xl font-bold mb-4">Image to PowerPoint Converter</h1>
                 <div
@@ -128,13 +129,15 @@ export default function ConverterPage() {
                 </div>
                 <div ref={previewRef} className="text-center my-6"></div>
                 <button
-                    className="px-6 py-3 bg-green-600 text-white text-lg rounded disabled:bg-gray-400"
+                    className="px-6 py-3 bg-blue-500 text-white text-lg rounded cursor-pointer w-full"
                     onClick={handleConvert}
                     disabled={!imageData || isProcessing}
                 >
                     Convert to PowerPoint
                 </button>
                 <div className="mt-4 text-gray-600">{status}</div>
+
+                <ConverterInfoCard className="mt-4" />
             </div>
         </Page>
     );
